@@ -256,8 +256,15 @@ serial(PSTR("Masuk ke Proces Radio Message %d\n"), mGetCommand(message) );
     if (mGetCommand(message) == C_INTERNAL){
       serial(PSTR("Masuk ke Proces Radio Message %d %d\n"),1,message.sender);
       if (msg.type==I_ID_REQUEST && message.sender == 255){
-        serial(PSTR("Masuk ke Proces Radio Message %d\n"),10);
-        if (!sendRoute(build(message, GATEWAY_ADDRESS, message.sender, 255, C_INTERNAL, I_ID_RESPONSE, 0).set((byte)5))) 
+        /** check for existing ID **/
+        uint8_t newNodeID = loadState(EEPROM_LATEST_NODE_ADDRESS)+1;
+        if (newNodeID <= MYSENSOR_FIRST_SENSORID) newNodeID = MYSENSOR_FIRST_SENSORID;
+        if (newNodeID >= MQTT_LAST_SENSORID) {
+          serial(PSTR("DEBUG: ID Full\n"),10,newNodeID);
+          return;
+        }
+        serial(PSTR("Masuk ke Proces Radio Message %d %d\n"),10,newNodeID);
+        if (!sendRoute(build(message, GATEWAY_ADDRESS, message.sender, 255, C_INTERNAL, I_ID_RESPONSE, 0).set((byte)newNodeID))) 
           serial(PSTR("Masuk ke Proces Radio Message %d\n"),20);
       }
     }
