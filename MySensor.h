@@ -234,8 +234,11 @@ class MySensor : public RF24
 	 */
 	int8_t sleep(uint8_t interrupt1, uint8_t mode1, uint8_t interrupt2, uint8_t mode2, unsigned long ms=0);
 
-
-
+	/**
+	 * Return VCC values. Useful if we take direct input from battery to VCC (bypass voltage regulator)
+	 */
+   int8_t getBatteryLevel();
+ 
 
 #ifdef DEBUG
 	void debugPrint(const char *fmt, ... );
@@ -273,6 +276,7 @@ class MySensor : public RF24
 	void addChildRoute(uint8_t childId, uint8_t route);
 	void removeChildRoute(uint8_t childId);
 	void internalSleep(unsigned long ms);
+	long readVcc();  	
 };
 #endif
 

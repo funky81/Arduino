@@ -71,6 +71,7 @@ void MySensor::begin(void (*_msgCallback)(const MyMessage &), uint8_t _nodeId, b
 
 	// Try to fetch node-id from gateway
 	if (nc.nodeId == AUTO) {
+	  debug(PSTR("Masuk ke auto ini"));
 		requestNodeId();
 	}
 
@@ -160,6 +161,19 @@ void MySensor::waitForReply() {
 	}
 }
 
+long MySensor::readVcc(){
+  long result;
+  // Read 1.1V reference against AVcc
+  ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+  delay(2); // Wait for Vref to settle
+  ADCSRA |= _BV(ADSC); // Convert
+  while (bit_is_set(ADCSRA,ADSC));
+  result = ADCL;
+  result |= ADCH<<8;
+  result = 1126400L  / result; // Back-calculate AVcc in mV
+  return result;
+}
+
 boolean MySensor::sendRoute(MyMessage &message) {
 	// Make sure to process any incoming messages before sending (could this end up in recursive loop?)
 	// process();
@@ -167,6 +181,7 @@ boolean MySensor::sendRoute(MyMessage &message) {
 
 	// If we still don't have any node id, re-request and skip this message.
 	if (nc.nodeId == AUTO && !(isInternal && message.type == I_ID_REQUEST)) {
+    debug(PSTR("Masuk ke sini juga %d"),2);
 		requestNodeId();
 		return false;
 	}
@@ -331,7 +346,7 @@ boolean MySensor::process() {
 					wdt_enable(WDTO_15MS);
 					for (;;);
 				} else if (type == I_ID_RESPONSE) {
-					if (nc.nodeId == AUTO) {
+					/*if (nc.nodeId == AUTO) {
 						nc.nodeId = msg.getByte();
 						// Write id to EEPROM
 						if (nc.nodeId == AUTO) {
@@ -341,9 +356,11 @@ boolean MySensor::process() {
 						} else {
 							RF24::openReadingPipe(CURRENT_NODE_PIPE, TO_ADDR(nc.nodeId));
 							eeprom_write_byte((uint8_t*)EEPROM_NODE_ID_ADDRESS, nc.nodeId);
-						}
+						}*/
+						nc.nodeId = msg.getByte();
+						debug(PSTR("Masuk ke ID_RESPONSE"));
 						debug(PSTR("id=%d\n"), nc.nodeId);
-					}
+					//}
 				} else if (type == I_CONFIG) {
 					// Pick up configuration from controller (currently only metric/imperial)
 					// and store it in eeprom if changed
@@ -498,6 +515,15 @@ bool MySensor::sleep(uint8_t interrupt, uint8_t mode, unsigned long ms) {
 	}
 	detachInterrupt(interrupt);
 	return pinTriggeredWakeup;
+}
+
+int8_t MySensor::getBatteryLevel(){
+  int results = (readVcc() - 2000)  / 10;  
+  if (results > 100)
+    results = 100;
+  if (results < 0)
+    results = 0;
+  return results;
 }
 
 int8_t MySensor::sleep(uint8_t interrupt1, uint8_t mode1, uint8_t interrupt2, uint8_t mode2, unsigned long ms) {
