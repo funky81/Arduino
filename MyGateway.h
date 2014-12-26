@@ -22,7 +22,7 @@
   */
 #define EEPROM_LATEST_NODE_ADDRESS ((uint8_t)EEPROM_LOCAL_CONFIG_ADDRESS)
 #define MYSENSOR_FIRST_SENSORID	20  		// If you want manually configured nodes below this value. 255 = Disable
-#define MYSENSOR_SENSORID	254 		// 254 is max! 255 reserved.
+#define MYSENSOR_LAST_SENSORID	254 		// 254 is max! 255 reserved.
 
 class MyGateway : public MySensor
 {

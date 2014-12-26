@@ -127,7 +127,6 @@ uint8_t MyGateway::h2i(char c) {
 }
 
 void MyGateway::parseAndSend(char *commandBuffer) {
-serial(PSTR("MASUK KE PARSE and Send"));
   boolean ok = false;
   char *str, *p, *value=NULL;
   uint8_t bvalue[MAX_PAYLOAD];
@@ -185,7 +184,6 @@ serial(PSTR("MASUK KE PARSE and Send"));
 serial(PSTR("%d:%d"),destination,command);
   if (destination==GATEWAY_ADDRESS && command==C_INTERNAL) {
     // Handle messages directed to gateway
-    serial(PSTR("Masuk sini 2"));
     if (type == I_VERSION) {
       // Request for version
       serial(PSTR("0;0;%d;0;%d;%s\n"),C_INTERNAL, I_VERSION, LIBRARY_VERSION);
@@ -194,9 +192,6 @@ serial(PSTR("%d:%d"),destination,command);
       // Request to change inclusion mode
       setInclusionMode(atoi(value) == 1);
     } 
-    else if (type == I_ID_REQUEST){
-      serial(PSTR("Masuk sini"));
-    }
   } 
   else {
     txBlink(1);
@@ -242,11 +237,9 @@ inline MyMessage& build (MyMessage &msg, uint8_t sender, uint8_t destination, ui
 }
 
 void MyGateway::processRadioMessage() {
-//serial(PSTR("Masuk ke Proces Radio Message"));
   if (process()) {
     // A new message was received from one of the sensors
     MyMessage message = getLastMessage();
-serial(PSTR("Masuk ke Proces Radio Message %d\n"), mGetCommand(message) );    
     if (mGetCommand(message) == C_PRESENTATION && inclusionMode) {
       rxBlink(3);
     } 
@@ -254,18 +247,18 @@ serial(PSTR("Masuk ke Proces Radio Message %d\n"), mGetCommand(message) );
       rxBlink(1);
     }
     if (mGetCommand(message) == C_INTERNAL){
-      serial(PSTR("Masuk ke Proces Radio Message %d %d\n"),1,message.sender);
       if (msg.type==I_ID_REQUEST && message.sender == 255){
-        /** check for existing ID **/
+        /** this sub process is the place where we respond to ID Request for sensor that have auto configuration **/
         uint8_t newNodeID = loadState(EEPROM_LATEST_NODE_ADDRESS)+1;
         if (newNodeID <= MYSENSOR_FIRST_SENSORID) newNodeID = MYSENSOR_FIRST_SENSORID;
-        if (newNodeID >= MQTT_LAST_SENSORID) {
+        if (newNodeID >= MYSENSOR_LAST_SENSORID) {
           serial(PSTR("DEBUG: ID Full\n"),10,newNodeID);
+          if (!sendRoute(build(message, GATEWAY_ADDRESS, message.sender, 255, C_INTERNAL, I_ID_RESPONSE, 0).set((byte)255))) 
+            errBlink(1);
           return;
         }
-        serial(PSTR("Masuk ke Proces Radio Message %d %d\n"),10,newNodeID);
         if (!sendRoute(build(message, GATEWAY_ADDRESS, message.sender, 255, C_INTERNAL, I_ID_RESPONSE, 0).set((byte)newNodeID))) 
-          serial(PSTR("Masuk ke Proces Radio Message %d\n"),20);
+          errBlink(1);
       }
     }
     // Pass along the message from sensors to serial line

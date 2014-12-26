@@ -88,13 +88,10 @@ char* MyMessage::getString(char *buffer) const {
 
 uint8_t MyMessage::getByte() const {
 	if (miGetPayloadType() == P_BYTE) {
-    Serial.println(PSTR("BYYTE"));
 		return data[0];
 	} else if (miGetPayloadType() == P_STRING) {
-	  Serial.println(PSTR("STRING"));
 		return atoi(data);
 	} else {
-	  Serial.println(PSTR("OTHERS"));
 		return -1;
 	}
 }

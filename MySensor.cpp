@@ -71,7 +71,6 @@ void MySensor::begin(void (*_msgCallback)(const MyMessage &), uint8_t _nodeId, b
 
 	// Try to fetch node-id from gateway
 	if (nc.nodeId == AUTO) {
-	  debug(PSTR("Masuk ke auto ini"));
 		requestNodeId();
 	}
 
@@ -181,7 +180,6 @@ boolean MySensor::sendRoute(MyMessage &message) {
 
 	// If we still don't have any node id, re-request and skip this message.
 	if (nc.nodeId == AUTO && !(isInternal && message.type == I_ID_REQUEST)) {
-    debug(PSTR("Masuk ke sini juga %d"),2);
 		requestNodeId();
 		return false;
 	}
@@ -346,21 +344,20 @@ boolean MySensor::process() {
 					wdt_enable(WDTO_15MS);
 					for (;;);
 				} else if (type == I_ID_RESPONSE) {
-					/*if (nc.nodeId == AUTO) {
+          /** this is the place where sensor response ID that given by the controller **/
+					if (nc.nodeId == AUTO) {
 						nc.nodeId = msg.getByte();
 						// Write id to EEPROM
-						if (nc.nodeId == AUTO) {
+						if (nc.nodeId == 255 || nc.nodeId == AUTO) {
 							// sensor net gateway will return max id if all sensor id are taken
 							debug(PSTR("full\n"));
 							while (1); // Wait here. Nothing else we can do...
 						} else {
 							RF24::openReadingPipe(CURRENT_NODE_PIPE, TO_ADDR(nc.nodeId));
 							eeprom_write_byte((uint8_t*)EEPROM_NODE_ID_ADDRESS, nc.nodeId);
-						}*/
-						nc.nodeId = msg.getByte();
-						debug(PSTR("Masuk ke ID_RESPONSE"));
+						}
 						debug(PSTR("id=%d\n"), nc.nodeId);
-					//}
+					}
 				} else if (type == I_CONFIG) {
 					// Pick up configuration from controller (currently only metric/imperial)
 					// and store it in eeprom if changed
