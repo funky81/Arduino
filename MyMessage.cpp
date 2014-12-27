@@ -92,7 +92,7 @@ uint8_t MyMessage::getByte() const {
 	} else if (miGetPayloadType() == P_STRING) {
 		return atoi(data);
 	} else {
-		return 0;
+		return -1;
 	}
 }
 
